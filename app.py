@@ -8,7 +8,11 @@ import math
 import requests
 
 
-st.set_page_config(page_title="💸 Portfolio Rebalancing App 💸", page_icon=":guardsman:", layout="wide")
+st.set_page_config(page_title="💸 Portfolio Rebalancing App 💸",  page_icon="🦈", layout="wide", menu_items={
+         'Get Help': 'https://ryanshrott.com',
+         'Report a bug': 'https://ryanshrott.com',
+         'About': "Built by Ryan Shrott"
+     })
 
 from streamlit.components.v1 import html
 
@@ -59,7 +63,7 @@ with cols[1]:
     transaction_fee = st.number_input("Flat Trading Fee ($) (per trade)", value = 6.95, min_value = 0.0, max_value = 100.0, step = 0.1)
 with st.form('Positions') as f:
 
-    st.header('Positions Inputs 🔖 (edit me like an Excel sheet)!')
+    st.header('User Inputs 🔖 (edit me like an Excel sheet)!')
     df = pd.DataFrame({
     'Ticker': ['cash', 'XAW.TO', 'ZAG.TO', 'VCN.TO'] + ['Placeholder'] * (n - 3),
     'Shares': [6500] + [100, 400, 300] + [0] * (n - 3),
