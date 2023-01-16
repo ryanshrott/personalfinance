@@ -173,17 +173,17 @@ def get_price_vantage(symbol):
         return 1
     if 'Ticker' in symbol:
         return 0.0000001
+    #try:
+    #    api_key = os.getenv('ALPHA_VANTAGE_API_KEY')
+    #    data = requests.get(f'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}').json()
+    #    price = data["Global Quote"]["05. price"]
+    #except KeyError:
     try:
-        api_key = os.getenv('ALPHA_VANTAGE_API_KEY')
-        data = requests.get(f'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}').json()
-        price = data["Global Quote"]["05. price"]
-    except KeyError:
-        try:
-            Ticker = yf.Ticker(symbol)
-            price = Ticker.info['regularMarketPrice']
-        except Exception:
-            st.error(f'Error getting price for {symbol}')
-            price = None
+        Ticker = yf.Ticker(symbol)
+        price = Ticker.info['regularMarketPrice']
+    except Exception:
+        st.error(f'Error getting price for {symbol}')
+        price = None
     return float(price)
 
 def get_price_yahoo(symbol):
