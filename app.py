@@ -31,10 +31,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.title("💸 Portfolio Rebalancing App 💸")
-
-
-st.write("Enter the current prices, quantities, and desired allocations of your stocks and cash. Then click the Rebalance button to see the new quantities of each stock and the trading fees you will incur. At this time, only a single consistent currency is support. Do not mix currencies.")
-
+st.markdown('### Instructions')
+st.write("Enter your current positions and desired allocations of your positions and cash in the table below. Then click the Rebalance button to calculate the proposed action plan. At this time, only a single consistent currency is support. Do not mix currencies.")
+st.write('Tips:')
+st.write("- The ticker column should be ticker shown on [Yahoo Finance](https://ca.finance.yahoo.com/quote/BMO.TO/). For example, the ticker for BMO is BMO.TO.")
+st.write('- The desired allocation column should be a number between 0 and 100. For example, 50.0 means 50% of your portfolio should be in that position. The sum of all desired allocations should be 100.0.')
+st.write('- If you are on mobile, double tap the table to edit the cells.')
 
 
 
@@ -52,25 +54,25 @@ st.write("Enter the current prices, quantities, and desired allocations of your 
 # This part for updating the Grid so that Streamlit doesnot rerun from whole
 cols = st.columns(2)
 with cols[0]:
-    n = st.number_input("Number of Stocks", value = 3, min_value = 1, max_value = 10, step = 1)
+    n = st.number_input("Number of Tickers", value = 3, min_value = 1, max_value = 10, step = 1)
 with cols[1]:
     transaction_fee = st.number_input("Flat Trading Fee ($) (per trade)", value = 6.95, min_value = 0.0, max_value = 100.0, step = 0.1)
 with st.form('Positions') as f:
 
     st.header('Positions Inputs 🔖 (edit me like an Excel sheet)!')
     df = pd.DataFrame({
-    'Stock': ['cash', 'XAW.TO', 'ZAG.TO', 'VCN.TO'] + ['Placeholder'] * (n - 3),
-    'Quantity': [6500] + [100, 400, 300] + [0] * (n - 3),
+    'Ticker': ['cash', 'XAW.TO', 'ZAG.TO', 'VCN.TO'] + ['Placeholder'] * (n - 3),
+    'Shares': [6500] + [100, 400, 300] + [0] * (n - 3),
     'Desired Allocation (%)': [1, 33, 33, 33] + [0] * (n - 3),
     })
-    numeric_df = df[['Quantity', 'Desired Allocation (%)']]
+    numeric_df = df[['Shares', 'Desired Allocation (%)']]
     numeric_df= numeric_df.applymap(lambda x: pd.to_numeric(x, errors='coerce'))
 
     gd = GridOptionsBuilder.from_dataframe(df)
     gd.configure_default_column(editable=True)
     gd.configure_column(field = 'Desired Allocation (%)', width = 400)
     #gd.configure_column(field = 'Price ($)', width = 160)
-    gd.configure_column(field = 'Stock', width = 150)
+    gd.configure_column(field = 'Ticker', width = 150)
     gridoptions = gd.build()
     ag_grid  = AgGrid(df,
                     gridOptions = gridoptions, 
@@ -82,29 +84,29 @@ with st.form('Positions') as f:
 
     if st.form_submit_button("Rebalance", type="primary"):
         df = ag_grid['data']
-        df = df[~((df['Quantity'] == 0) & (df['Desired Allocation (%)'] == 0))]
-        df['Price ($)'] = df['Stock'].apply(lambda x: get_price_vantage(x))
+        df = df[~((df['Shares'] == 0) & (df['Desired Allocation (%)'] == 0))]
+        df['Price ($)'] = df['Ticker'].apply(lambda x: get_price_vantage(x))
         if df['Desired Allocation (%)'].sum() != 100:
             st.error('Desired Allocation must sum to 100%')
             st.stop()
         prices = df['Price ($)'].values
-        names = df['Stock'].values
-        quantities = df['Quantity'].values
+        names = df['Ticker'].values
+        quantities = df['Shares'].values
         allocations = df['Desired Allocation (%)'].values
-        fee = transaction_fee * df[df.Stock != 'cash'].shape[0]
+        fee = transaction_fee * df[df.Ticker != 'cash'].shape[0]
 
         new_quantities = calculate_rebalanced_portfolio(prices, quantities, allocations, fee)
         total_value = sum(float(prices[i]) * float(quantities[i]) for i in range(len(prices)))
         st.write(f'Your portfolio value is ${total_value:,.2f}.')
         st.write(f'Your total trading fees will be ${fee:,.2f}.')
         df = update_table(df, new_quantities, transaction_fee)
-        cash = df[df['Stock'] == 'cash']['Dollar Value'].values[0]
+        cash = df[df['Ticker'] == 'cash']['Dollar Value'].values[0]
         df['price'] = df['Price ($)']
         port_value_new = df["Desired Dollar Value"].sum() - fee
 
         for c in ['Price ($)', 'Dollar Value', 'Desired Dollar Value']:
             df[c] = df[c].apply(lambda x: "${:,.2f}".format(x))
-        for c in ['Desired Allocation (%)', 'Current Allocation (%)', 'Desired Quantity', 'Quantity']:
+        for c in ['Desired Allocation (%)', 'Current Allocation (%)', 'Desired Shares', 'Shares']:
             df[c] = df[c].apply(lambda x: "{:,.2f}".format(x))
 
         st.write('Calculations table:')
@@ -114,9 +116,9 @@ with st.form('Positions') as f:
 
         def get_action_plan(df, allow_fractional_shares = True):
             prices = df['Price ($)'].values
-            names = df['Stock'].values
-            new_quantities = [float(x.replace(',','')) for x in df['Desired Quantity'].values]
-            quantities = [float(x.replace(',','')) for x in df['Quantity'].values]
+            names = df['Ticker'].values
+            new_quantities = [float(x.replace(',','')) for x in df['Desired Shares'].values]
+            quantities = [float(x.replace(',','')) for x in df['Shares'].values]
             action_plan = []
             sell_actions = []
             buy_actions = []

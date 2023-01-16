@@ -10,15 +10,15 @@ dotenv.load_dotenv()
 
 def update_table(data, new_quantities, transaction_fee = 0.0):
     price = data['Price ($)']
-    quantity = data.Quantity
+    quantity = data.Shares
     total_value = sum(price[i] * quantity[i] for i in range(len(price)))
     current_allocation = (price * quantity)/total_value*100
     data["Current Allocation (%)"] = current_allocation
     data['Dollar Value'] = price * quantity
-    data['Desired Quantity'] = new_quantities
-    data['Trading Fee'] = data['Stock'].apply(lambda x: transaction_fee if x != 'cash' else 0)
-    data['Desired Dollar Value'] = data['Desired Quantity'] * data['Price ($)']
-    return data[['Stock', 'Price ($)', 'Quantity',  'Desired Quantity', 'Dollar Value', 'Desired Dollar Value', 'Current Allocation (%)', 'Desired Allocation (%)', 'Trading Fee']]
+    data['Desired Shares'] = new_quantities
+    data['Trading Fee'] = data['Ticker'].apply(lambda x: transaction_fee if x != 'cash' else 0)
+    data['Desired Dollar Value'] = data['Desired Shares'] * data['Price ($)']
+    return data[['Ticker', 'Price ($)', 'Shares',  'Desired Shares', 'Dollar Value', 'Desired Dollar Value', 'Current Allocation (%)', 'Desired Allocation (%)', 'Trading Fee']]
 
 def calculate_rebalanced_portfolio(prices, quantities, allocations, fee):
     total_value = sum(prices[i] * quantities[i] for i in range(len(prices))) - fee
@@ -171,7 +171,7 @@ cellRenderer_addButton = JsCode('''
 def get_price_vantage(symbol):
     if symbol == 'CASH' or symbol=='cash' or symbol=='Cash':
         return 1
-    if 'Stock' in symbol:
+    if 'Ticker' in symbol:
         return 0.0000001
     try:
         api_key = os.getenv('ALPHA_VANTAGE_API_KEY')
@@ -179,8 +179,8 @@ def get_price_vantage(symbol):
         price = data["Global Quote"]["05. price"]
     except KeyError:
         try:
-            stock = yf.Ticker(symbol)
-            price = stock.info['regularMarketPrice']
+            Ticker = yf.Ticker(symbol)
+            price = Ticker.info['regularMarketPrice']
         except Exception:
             st.error(f'Error getting price for {symbol}')
             price = None
@@ -188,8 +188,8 @@ def get_price_vantage(symbol):
 
 def get_price_yahoo(symbol):
     try:
-        stock = yf.Ticker(symbol)
-        price = stock.info['regularMarketPrice']
+        Ticker = yf.Ticker(symbol)
+        price = Ticker.info['regularMarketPrice']
     except Exception:
         st.warning(f'Error getting price for {symbol}')
         price = 0
