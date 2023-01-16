@@ -57,7 +57,7 @@ with cols[1]:
     transaction_fee = st.number_input("Flat Trading Fee ($) (per trade)", value = 6.95, min_value = 0.0, max_value = 100.0, step = 0.1)
 with st.form('Positions') as f:
 
-    st.header('Positions Inputs 🔖 (edit me)!')
+    st.header('Positions Inputs 🔖 (edit me like an Excel sheet)!')
     df = pd.DataFrame({
     'Stock': ['cash', 'XAW.TO', 'ZAG.TO', 'VCN.TO'] + ['Placeholder'] * (n - 3),
     'Quantity': [6500] + [100, 400, 300] + [0] * (n - 3),
